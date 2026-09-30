@@ -50,6 +50,11 @@ namespace {
 
 std::atomic<bool> stopRequested(false);
 
+// Time between full keypad scans. 200 scans/s is far faster than a finger
+// and still gives the 20 ms debounce four samples. Scanning every 1 ms
+// cost about 14% of a core on a Pi 3 for no benefit.
+const milliseconds SCAN_INTERVAL(5);
+
 void onSignal(int) {
 	stopRequested = true;
 }
@@ -218,7 +223,7 @@ int main(int argc, char * argv[]) {
 				std::cout << std::endl;
 			}
 
-			std::this_thread::sleep_for(milliseconds(1));
+			std::this_thread::sleep_for(SCAN_INTERVAL);
 		}
 
 		std::cout << "Stopped." << std::endl;
