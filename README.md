@@ -274,10 +274,13 @@ docker run --rm -v "$PWD":/src -w /src debian:bookworm scripts/build-deb.sh armh
 ```
 
 **Releasing a new version:**
-1. Bump `VERSION` in `CMakeLists.txt`.
-2. Push a matching tag, e.g. `v2.0.1`.
+1. Bump `VERSION` in `CMakeLists.txt` and merge the change to `master`.
+2. Create a matching tag, e.g. `v2.0.1`. Either push it with git, or on
+   GitHub go to *Releases*, *Draft a new release*, type the tag, pick
+   `master`, and click *Publish release*.
 
-CI builds both packages and publishes a GitHub Release. The release also
+CI builds both packages and attaches them to the release. A tag that
+doesn't match `VERSION` fails the build. The release also
 carries version-less copies (`flight-simulator-keys_armhf.deb`), so the
 download links in the guide above always fetch the newest version.
 
