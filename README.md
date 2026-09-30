@@ -36,12 +36,22 @@ nothing while you type it.
 - The Pi and the **X-Plane 12 computer on the same home network**, either on
   the same Wi-Fi or plugged into the same router.
 - A keyboard and screen on the Pi, or a remote login to it (SSH).
+- If the Pi's memory card is new or needs wiping, set it up first with
+  [Preparing a new memory card](#preparing-a-new-memory-card-optional).
 
 ### Part 1: Open a terminal on the Pi
 
 1. On the Pi's desktop, click the **black screen icon** in the top bar, or
    press **Ctrl + Alt + T**.
 2. A window with a text prompt opens. All the commands below are typed here.
+
+**Using another computer instead (SSH)?** Open PowerShell (Windows) or
+Terminal (Mac) and type `ssh yourname@yourpi.local`, using the Pi's user
+name and host name. Before typing any command below, **check the prompt**.
+It must show the Pi's name, for example `yourname@yourpi:~ $`. If it shows
+`PS C:\...`, you are still typing on Windows, not on the Pi. The connection
+also drops every time the Pi restarts, so run the `ssh` line again after a
+reboot.
 
 ### Part 2: Download and install the program
 
@@ -66,14 +76,18 @@ nothing while you type it.
    sudo apt install ./flight-simulator-keys_armhf.deb
    ```
    If asked `Do you want to continue? [Y/n]`, type **Y** and press Enter.
+   A line starting with `Notice: Download is performed unsandboxed as root`
+   is normal and not an error.
 
 **Check:** type `flight-simulator-keys --version`. It should print a
-version number such as `2.0.0`.
+version number such as `2.0.1`.
 
 ### Part 3: Free up the pins the buttons use
 
-Two features of the Pi (the serial console and I2C) normally hold some of
-the pins the button panel uses. Switch them off:
+Two features of the Pi (the serial console and I2C) can hold some of the
+pins the button panel uses. A freshly installed Pi OS usually has them off
+already, but older setups may not. Switching them off is harmless either
+way:
 
 1. Type:
    ```
@@ -108,7 +122,7 @@ background copy first so the test can use the pins.
    ```
    You should see:
    ```
-   flight-simulator-keys 2.0.0: loaded 69 key bindings from /etc/flight-simulator/keys.conf (8 rows x 9 columns)
+   flight-simulator-keys 2.0.1: loaded 69 key bindings from /etc/flight-simulator/keys.conf (8 rows x 9 columns)
    Scanning keypad. Press Control-C to stop.
    ```
 3. **Press each button on the panel, one at a time.** Each press should
@@ -117,6 +131,9 @@ background copy first so the test can use the pins.
    KEY PRESS   row=7 col=3  would send sim/FMS/exec
    KEY RELEASE row=7 col=3
    ```
+   The `KEY RELEASE` line should appear the moment you let go. If it comes
+   late, or `Multiple keys pressed` appears when you press the next button,
+   that button is **sticking** (see [Troubleshooting](#troubleshooting)).
    Check that the command matches the button's label. For example, the EXEC
    key should say `sim/FMS/exec`.
 4. When you have tried every button, press **Ctrl + C** to stop the test.
@@ -191,11 +208,37 @@ networks.
 | Pressing a button prints nothing | The button isn't connected | Check that button's two wires. See [Wiring](#wiring). |
 | Wrong command for a button | The row/column wires are swapped, or the keymap differs from your panel | Fix the wiring, or change that button's line in `keys.conf` (see [Changing what the buttons do](#changing-what-the-buttons-do)). |
 | `(no binding)` | That button has no command yet | Add a line for it in `keys.conf`. |
-| `Multiple keys pressed; ignoring.` when pressing only one button | Two wires are touching, or a switch is stuck | Check for a short or a stuck key. |
+| `Multiple keys pressed; ignoring.` when pressing only one button | Another button is **stuck down** (often one on the same row or column), or two wires are touching | Press each nearby button once and watch for a late or missing `KEY RELEASE`; that one is sticking. With the Pi off, clean it (a drop of 90% isopropyl alcohol or contact cleaner, then press it 20–30 times) or replace the switch. |
+| A button seems dead, but it works on a second try | A sticky or dirty switch | Clean or replace it as above. |
+| One press registers twice | The switch bounces longer than the filter allows | In `keys.conf`, change `debounce_ms = 20` to `debounce_ms = 30`, then restart the program. |
+| `Sudo is disabled on this machine` | You typed the command on Windows, not on the Pi | Connect to the Pi first (see Part 1). Don't change the Windows setting. |
+| `ssh: ... Connection refused` | SSH is switched off on the Pi | See [Preparing a new memory card](#preparing-a-new-memory-card-optional), step 3. |
 | `X-Plane not found; dropped ...` | The Pi can't see X-Plane | Make sure X-Plane is running, then follow [If the Pi can't find X-Plane](#if-the-pi-cant-find-x-plane). |
 
 To see the last 50 lines of the program's log at any time, type:
 `journalctl -u flight-simulator-keys -n 50`
+
+### Preparing a new memory card (optional)
+
+Only needed for a new card, or to start over. This **erases** the card.
+
+1. On a Windows or Mac computer, install **Raspberry Pi Imager** from
+   <https://www.raspberrypi.com/software/> and put the Pi's memory card
+   into the computer.
+2. In Imager, choose the **Raspberry Pi 3** (or your model), **Raspberry Pi
+   OS**, and the memory card. Check the size so you don't pick a different
+   drive.
+3. Click **Next**, then **Edit settings**:
+   - **General:** a host name (e.g. `flightsim`), a user name and
+     password (write them down), your Wi-Fi, and your time zone.
+   - **Services:** tick **Enable SSH** and choose **Use password
+     authentication**. Missing this step is why SSH later says
+     "Connection refused".
+4. Click **Save**. When asked **"apply OS customisation settings?"**, click
+   **Yes**, then **Yes** to erase the card.
+5. If Windows offers to **format** the card afterwards, click **Cancel**.
+6. Put the card in the Pi, power it on, and wait **5 minutes** before the
+   first connection. The first start takes a while.
 
 ### Updating or removing
 
