@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(flight-simulator-keys
-	VERSION 2.0.1
+	VERSION 2.0.2
 	DESCRIPTION "Raspberry Pi GPIO key matrix to X-Plane command bridge"
 	LANGUAGES CXX)
 
@@ -69,17 +69,21 @@ if(FLIGHTSIM_BUILD_TESTS)
 		--config ${CMAKE_CURRENT_SOURCE_DIR}/config/keys.conf
 		--dry-run --fake-keys "1,1 7,3 5,9 8,9")
 	set_tests_properties(dry_run_e2e PROPERTIES
-		PASS_REGULAR_EXPRESSION "row=1 col=1  would send sim/FMS/ls_1l.*row=7 col=3  would send sim/FMS/exec.*row=5 col=9  would send sim/FMS/key_3.*row=8 col=9  \\(no binding\\)")
+		PASS_REGULAR_EXPRESSION "row=1 col=1  would send laminar/B738/button/fmc1_1L.*row=7 col=3  would send laminar/B738/button/fmc1_exec.*row=5 col=9  would send laminar/B738/button/fmc1_3.*row=8 col=9  \\(no binding\\)")
 endif()
 
 # --- install / package ---
 install(TARGETS flight-simulator-keys RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES config/keys.conf DESTINATION /etc/flight-simulator)
+install(FILES config/keys.conf config/keys-xplane-default.conf
+	DESTINATION /etc/flight-simulator)
+# Pristine copy so users can switch back after trying another keymap.
+install(FILES config/keys.conf DESTINATION /etc/flight-simulator RENAME keys-zibo.conf)
 install(FILES packaging/flight-simulator-keys.service
 	DESTINATION /lib/systemd/system)
 install(FILES README.md LICENSE.txt DESTINATION ${CMAKE_INSTALL_DOCDIR})
 
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/conffiles "/etc/flight-simulator/keys.conf\n")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/conffiles
+	"/etc/flight-simulator/keys.conf\n/etc/flight-simulator/keys-zibo.conf\n/etc/flight-simulator/keys-xplane-default.conf\n")
 
 set(CPACK_GENERATOR DEB)
 set(CPACK_PACKAGE_NAME flight-simulator-keys)
