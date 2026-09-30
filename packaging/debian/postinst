@@ -1,0 +1,14 @@
+#!/bin/sh
+set -e
+if [ "$1" = "configure" ]; then
+	getent group gpio >/dev/null || addgroup --system gpio
+	if ! getent passwd flightsim >/dev/null; then
+		adduser --system --no-create-home --ingroup gpio flightsim
+	fi
+	if [ -d /run/systemd/system ]; then
+		systemctl daemon-reload
+		systemctl enable flight-simulator-keys.service
+		systemctl restart flight-simulator-keys.service || true
+	fi
+fi
+exit 0

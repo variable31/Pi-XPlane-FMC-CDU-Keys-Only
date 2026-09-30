@@ -1,0 +1,17 @@
+[Unit]
+Description=Flight Simulator keypad -> X-Plane bridge (Pi-XPlane-FMC-CDU-Keys-Only)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/flight-simulator-keys --config /etc/flight-simulator/keys.conf
+Restart=on-failure
+RestartSec=5
+# GPIO access via /dev/gpiochip* without running as root.
+User=flightsim
+Group=gpio
+SupplementaryGroups=gpio
+
+[Install]
+WantedBy=multi-user.target
