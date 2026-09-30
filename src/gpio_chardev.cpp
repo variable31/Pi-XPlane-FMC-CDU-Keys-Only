@@ -67,9 +67,11 @@ int requestLines(int chipFd, const std::string & chipPath,
 				+ describeLines(lines) + "] on " + chipPath + ": "
 				+ strerror(err);
 		if (err == EBUSY) {
-			msg += ". Another driver owns one of these pins. On a Pi, GPIO 14/15 "
-					"are the serial console and GPIO 2/3 are I2C: disable them "
-					"with 'sudo raspi-config' (Interface Options) and reboot.";
+			msg += ". Something else is using these pins. Either the background "
+					"service is already running (stop it with 'sudo systemctl stop "
+					"flight-simulator-keys'), or, on a Pi, GPIO 14/15 are the serial "
+					"console and GPIO 2/3 are I2C: disable them with 'sudo "
+					"raspi-config' (Interface Options) and reboot.";
 		} else if (err == EINVAL) {
 			msg += ". Check the pin numbers are BCM numbers valid for this chip.";
 		}
