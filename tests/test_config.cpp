@@ -23,7 +23,8 @@ const std::string GPIO = "[gpio]\ncolumns = 5 6\nrows = 20 21 26\n";
 }
 
 int main() {
-	// The shipped config must reproduce the original 69-key FMC mapping.
+	// The shipped default is the Zibo 737 (captain CDU), same 69 positions
+	// as the original Pi-XPlane-FMC-CDU Zibo mapping.
 	{
 		Config c = loadConfig(SOURCE_DIR "/config/keys.conf");
 		CHECK(c.chip == "/dev/gpiochip0");
@@ -33,11 +34,35 @@ int main() {
 		CHECK(c.host.empty());
 		CHECK(c.port == 49000);
 		CHECK(c.keys.size() == 69);
+		CHECK(c.keys.at( { 1, 1 }) == "laminar/B738/button/fmc1_1L");
+		CHECK(c.keys.at( { 7, 3 }) == "laminar/B738/button/fmc1_exec");
+		CHECK(c.keys.at( { 3, 3 }) == "laminar/B738/button/fmc1_legs");
+		CHECK(c.keys.at( { 5, 2 }) == "laminar/B738/button/fmc1_init_ref");
+		CHECK(c.keys.at( { 6, 7 }) == "laminar/B738/button/fmc1_SP");
+		CHECK(c.keys.at( { 5, 9 }) == "laminar/B738/button/fmc1_3");
+		CHECK(c.keys.count( { 8, 9 }) == 0);
+		for (const auto & k : c.keys) {
+			CHECK(k.second.rfind("laminar/B738/button/fmc1_", 0) == 0);
+		}
+	}
+
+	// The X-Plane default 737 keymap keeps the original 2019 mapping, and
+	// both keymaps cover exactly the same key positions and wiring.
+	{
+		Config z = loadConfig(SOURCE_DIR "/config/keys.conf");
+		Config c = loadConfig(SOURCE_DIR "/config/keys-xplane-default.conf");
+		CHECK(c.keys.size() == 69);
 		CHECK(c.keys.at( { 1, 1 }) == "sim/FMS/ls_1l");
 		CHECK(c.keys.at( { 7, 3 }) == "sim/FMS/exec");
 		CHECK(c.keys.at( { 2, 3 }) == "sim/fms_direct");
 		CHECK(c.keys.at( { 5, 9 }) == "sim/FMS/key_3");
-		CHECK(c.keys.count( { 8, 9 }) == 0);
+		CHECK(c.columns == z.columns);
+		CHECK(c.rows == z.rows);
+		bool samePositions = c.keys.size() == z.keys.size();
+		for (const auto & k : c.keys) {
+			samePositions = samePositions && z.keys.count(k.first) == 1;
+		}
+		CHECK(samePositions);
 	}
 
 	// Comments, blank lines, whitespace, inline comments, xplane section.

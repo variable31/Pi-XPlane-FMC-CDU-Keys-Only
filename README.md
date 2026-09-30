@@ -11,6 +11,10 @@ The original stopped installing when its author's apt repository went
 offline and took its libraries with it. This version has **no dependencies
 outside Raspberry Pi OS**.
 
+**Ready for the Zibo / LevelUp 737-800** (captain's CDU) out of the box.
+A keymap for X-Plane's default 737 is included too; see
+[Using X-Plane's default 737 instead](#using-x-planes-default-737-instead).
+
 > Looking for the Zibo 737 CDU with a screen? That is the separate
 > [Pi-XPlane-FMC-CDU](https://github.com/dotsha747/Pi-XPlane-FMC-CDU)
 > project. This program only sends key presses.
@@ -80,7 +84,7 @@ reboot.
    is normal and not an error.
 
 **Check:** type `flight-simulator-keys --version`. It should print a
-version number such as `2.0.1`.
+version number such as `2.0.2`.
 
 ### Part 3: Free up the pins the buttons use
 
@@ -122,20 +126,20 @@ background copy first so the test can use the pins.
    ```
    You should see:
    ```
-   flight-simulator-keys 2.0.1: loaded 69 key bindings from /etc/flight-simulator/keys.conf (8 rows x 9 columns)
+   flight-simulator-keys 2.0.2: loaded 69 key bindings from /etc/flight-simulator/keys.conf (8 rows x 9 columns)
    Scanning keypad. Press Control-C to stop.
    ```
 3. **Press each button on the panel, one at a time.** Each press should
    print two lines, like this:
    ```
-   KEY PRESS   row=7 col=3  would send sim/FMS/exec
+   KEY PRESS   row=7 col=3  would send laminar/B738/button/fmc1_exec
    KEY RELEASE row=7 col=3
    ```
    The `KEY RELEASE` line should appear the moment you let go. If it comes
    late, or `Multiple keys pressed` appears when you press the next button,
    that button is **sticking** (see [Troubleshooting](#troubleshooting)).
    Check that the command matches the button's label. For example, the EXEC
-   key should say `sim/FMS/exec`.
+   key should say `laminar/B738/button/fmc1_exec`.
 4. When you have tried every button, press **Ctrl + C** to stop the test.
 
 **Check:** every button printed a `KEY PRESS` line with the right command.
@@ -144,8 +148,7 @@ If not, see [Troubleshooting](#troubleshooting) before going on.
 ### Part 5: Fly with it
 
 1. On the flight simulator computer, start **X-Plane 12** and load a flight
-   in the default **Boeing 737-800**. The default keymap drives X-Plane's
-   built-in FMS.
+   in the **Zibo 737-800**. Use the captain's (left) CDU in the cockpit.
 2. On the Pi, start the program in the background again:
    ```
    sudo systemctl start flight-simulator-keys
@@ -159,7 +162,7 @@ If not, see [Troubleshooting](#troubleshooting) before going on.
    found X-Plane "SIM-PC" at 192.168.1.20:49000
    ```
 4. Press a button, such as the **INIT REF** or **LEGS** key. The log shows
-   `sent sim/FMS/...`, and the FMC page changes in X-Plane.
+   `sent laminar/B738/button/fmc1_...`, and the FMC page changes in X-Plane.
 5. Press **Ctrl + C** to stop watching the log. The program keeps running.
 
 **Done.** From now on, the program starts by itself every time the Pi is
@@ -213,6 +216,7 @@ networks.
 | One press registers twice | The switch bounces longer than the filter allows | In `keys.conf`, change `debounce_ms = 20` to `debounce_ms = 30`, then restart the program. |
 | `Sudo is disabled on this machine` | You typed the command on Windows, not on the Pi | Connect to the Pi first (see Part 1). Don't change the Windows setting. |
 | `ssh: ... Connection refused` | SSH is switched off on the Pi | See [Preparing a new memory card](#preparing-a-new-memory-card-optional), step 3. |
+| The log says `sent ...` but nothing happens in X-Plane | The keymap doesn't match the aircraft | The standard keymap is for the Zibo 737. For X-Plane's default 737, see [Using X-Plane's default 737 instead](#using-x-planes-default-737-instead). For any other aircraft, the commands need changing in `keys.conf`. |
 | `X-Plane not found; dropped ...` | The Pi can't see X-Plane | Make sure X-Plane is running, then follow [If the Pi can't find X-Plane](#if-the-pi-cant-find-x-plane). |
 
 To see the last 50 lines of the program's log at any time, type:
@@ -279,6 +283,27 @@ host =                 ; empty: find X-Plane automatically
 1,2 = sim/autopilot/heading
 2,3 = sim/FMS/exec
 ```
+
+### Using X-Plane's default 737 instead
+
+The standard keymap is for the **Zibo 737**. For X-Plane's own default
+737-800, switch to the included default keymap by typing:
+```
+sudo cp /etc/flight-simulator/keys-xplane-default.conf /etc/flight-simulator/keys.conf
+sudo systemctl restart flight-simulator-keys
+```
+The key positions are the same, so the wiring doesn't change. To go back
+to the Zibo keymap, type:
+```
+sudo cp /etc/flight-simulator/keys-zibo.conf /etc/flight-simulator/keys.conf
+sudo systemctl restart flight-simulator-keys
+``` For the Zibo **first
+officer's** CDU, change every `fmc1_` to `fmc2_` in `keys.conf`.
+
+When updating, if apt asks whether to replace `keys.conf` with the
+package's version, answer **N** to keep your own changes.
+
+### Finding other commands
 
 - **Finding command names:** in X-Plane, open *Settings > Keyboard* and
   search for a command; the name appears under it. Add-on aircraft publish
