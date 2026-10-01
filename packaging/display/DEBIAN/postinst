@@ -7,6 +7,15 @@ if [ "$1" = "configure" ]; then
 		fi
 	done
 	if [ -d /run/systemd/system ]; then
+		if [ "$(systemctl get-default 2>/dev/null)" = graphical.target ] ||
+			systemctl is-active --quiet display-manager.service 2>/dev/null; then
+			echo ""
+			echo "NOTE: this Pi starts the Raspberry Pi desktop, which keeps the screen"
+			echo "for itself, so the CDU will not appear. For a dedicated CDU screen, type:"
+			echo "  sudo systemctl set-default multi-user.target && sudo reboot"
+			echo "(To get the desktop back: sudo systemctl set-default graphical.target)"
+			echo ""
+		fi
 		systemctl daemon-reload
 		systemctl enable flight-simulator-display.service
 		systemctl restart flight-simulator-display.service || true

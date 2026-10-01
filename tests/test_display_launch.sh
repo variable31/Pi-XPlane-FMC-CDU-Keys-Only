@@ -66,6 +66,24 @@ while [ $i -lt 50 ] && [ "$(count "START http")" -lt 3 ]; do sleep 0.2; i=$((i+1
 kill "$LP"; wait "$LP" 2>/dev/null; LP=""
 sleep 0.5
 [ "$(count START)" = "$(count STOP)" ] || [ "$(( $(count START) - 1 ))" = "$(count STOP)" ] || fail "browser left running"
+# Desktop running: the kiosk cannot get the screen. The launcher must say
+# why (once, not on every retry) and keep retrying.
+mkdir "$T/bin"
+printf '#!/bin/sh\n[ "$1" = is-active ] && exit 0\nexit 1\n' > "$T/bin/systemctl"
+printf '#!/bin/sh\necho "START $1" >> "$KLOG"\nexit 1\n' > "$T/failkiosk"
+chmod +x "$T/bin/systemctl" "$T/failkiosk"
+: > "$LOG"
+PATH="$T/bin:$PATH" FSD_KIOSK=$T/failkiosk FSD_CONF=$T/display.conf \
+	FSD_HOST_FILE=$T/none FSD_WAITING=/w.html FSD_POLL=1 FSD_DESKTOP_BACKOFF=1 \
+	sh "$SRC/packaging/display/usr/lib/flight-simulator/display-launch" > "$T/launch.log" 2>&1 &
+LP=$!
+i=0; while [ $i -lt 50 ] && [ "$(count "START")" -lt 3 ]; do sleep 0.2; i=$((i+1)); done
+kill "$LP"; wait "$LP" 2>/dev/null; LP=""
+[ "$(count "START")" -ge 3 ] || fail "kiosk not retried while the desktop is running"
+n=$(grep -c "desktop is using the screen" "$T/launch.log") || true
+[ "${n:-0}" = 1 ] || fail "desktop message logged ${n:-0} times, expected once"
+grep -q "set-default multi-user.target" "$T/launch.log" || fail "desktop message lacks the fix"
+
 echo "display launcher: all checks passed"
 cleanup
 exit 0
