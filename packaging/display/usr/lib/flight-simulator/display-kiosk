@@ -1,0 +1,25 @@
+#!/bin/sh
+# Runs one full-screen browser on the Pi's display, inside the cage kiosk
+# compositor (no desktop needed). Usage: display-kiosk URL
+#
+# Copyright (c) 2026 Pi-XPlane-FMC-CDU-Keys-Only contributors. GPL-3.0-or-later.
+
+url=$1
+browser=""
+for b in chromium chromium-browser; do
+	if command -v "$b" >/dev/null 2>&1; then browser=$b; break; fi
+done
+if [ -z "$browser" ]; then
+	echo "display: Chromium is not installed (sudo apt install chromium)" >&2
+	exit 1
+fi
+
+profile=${STATE_DIRECTORY:-${TMPDIR:-/tmp}}/chromium
+
+# shellcheck disable=SC2086  # FSD_CHROMIUM_FLAGS is a list of flags
+exec cage -s -- "$browser" \
+	--kiosk --noerrdialogs --disable-infobars --no-first-run \
+	--disable-session-crashed-bubble --disable-translate \
+	--check-for-update-interval=31536000 --password-store=basic \
+	--ozone-platform=wayland --user-data-dir="$profile" \
+	${FSD_CHROMIUM_FLAGS:-} "$url"

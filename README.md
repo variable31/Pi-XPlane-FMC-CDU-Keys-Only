@@ -84,7 +84,7 @@ reboot.
    is normal and not an error.
 
 **Check:** type `flight-simulator-keys --version`. It should print a
-version number such as `2.0.2`.
+version number such as `2.1.0`.
 
 ### Part 3: Free up the pins the buttons use
 
@@ -126,7 +126,7 @@ background copy first so the test can use the pins.
    ```
    You should see:
    ```
-   flight-simulator-keys 2.0.2: loaded 69 key bindings from /etc/flight-simulator/keys.conf (8 rows x 9 columns)
+   flight-simulator-keys 2.1.0: loaded 69 key bindings from /etc/flight-simulator/keys.conf (8 rows x 9 columns)
    Scanning keypad. Press Control-C to stop.
    ```
 3. **Press each button on the panel, one at a time.** Each press should
@@ -170,6 +170,64 @@ switched on. Just turn on the Pi and start X-Plane. You never need to run
 these steps again.
 
 If `found X-Plane` never appears, see the next section.
+
+### Part 6 (optional): Show the CDU screen on the Pi's display
+
+With a screen plugged into the Pi's HDMI port, the Pi can show the live
+CDU screen next to the buttons. The screen comes from **WebFMC**, an
+X-Plane plugin that publishes the CDU on your home network. The Pi
+switches to it automatically whenever X-Plane is running, and shows
+"WAITING FOR X-PLANE..." when it isn't.
+
+**On the X-Plane computer (once):**
+
+1. Install **WebFMC Pro for X-Plane 12** by Green Arc Studios, from the
+   [X-Plane.org store](https://store.x-plane.org/) or the developer's site,
+   using its installer. Check the product page to see whether its free mode
+   covers the Zibo 737 or the paid version is needed.
+2. Start X-Plane 12 with the Zibo 737. If Windows asks whether to let
+   X-Plane use the network, tick **Private networks** and click **Allow**.
+3. **Test it from a phone** on the same Wi-Fi. Open the browser and go to
+   `http://` + the X-Plane computer's address + `:9090`, for example
+   `http://192.168.1.20:9090`. (Find the address with `ipconfig`; see
+   [If the Pi can't find X-Plane](#if-the-pi-cant-find-x-plane).)
+   **The CDU must appear on the phone before you continue.** If it doesn't,
+   the Pi won't be able to show it either.
+
+**On the Pi:**
+
+4. Download and install the display program. Use the same terminal as
+   Part 2 (SSH is fine). This also installs a web browser, so it takes
+   several minutes on a Pi 3:
+   ```
+   wget https://github.com/variable31/Pi-XPlane-FMC-CDU-Keys-Only/releases/latest/download/flight-simulator-display_all.deb
+   sudo apt install ./flight-simulator-display_all.deb
+   ```
+5. Look at the Pi's screen. It shows **WAITING FOR X-PLANE...** in green.
+   Once X-Plane and WebFMC are running, it switches to the CDU by itself,
+   usually within 10 seconds of the buttons finding X-Plane. Press **LEGS**
+   on the panel and the screen changes page.
+
+**Good to know:**
+
+- The Pi's own screen now always shows the CDU, so it no longer shows a
+  login prompt. Use SSH from another computer to type commands.
+- To change the WebFMC port, set a fixed X-Plane address, or make the text
+  bigger, edit `/etc/flight-simulator/display.conf`, then type
+  `sudo systemctl restart flight-simulator-display`.
+- To remove it, type `sudo apt remove flight-simulator-display`. The
+  buttons keep working.
+
+**Screen blank, "no signal", or the wrong size?** HDMI-to-VGA adapters
+often don't tell the Pi which resolutions the screen supports. Set one by
+hand:
+1. Type `sudo nano /boot/firmware/cmdline.txt`. The file is a single long
+   line.
+2. Press **End** to go to the end of the line, then type a **space** and
+   `video=HDMI-A-1:1024x768@60`. Use your screen's resolution; 1024x768
+   and 800x600 suit most small VGA screens.
+3. Save with **Ctrl + O**, then **Enter**, then exit with **Ctrl + X**.
+4. Type `sudo reboot`.
 
 ### If the Pi can't find X-Plane
 
@@ -217,6 +275,9 @@ networks.
 | `Sudo is disabled on this machine` | You typed the command on Windows, not on the Pi | Connect to the Pi first (see Part 1). Don't change the Windows setting. |
 | `ssh: ... Connection refused` | SSH is switched off on the Pi | See [Preparing a new memory card](#preparing-a-new-memory-card-optional), step 3. |
 | The log says `sent ...` but nothing happens in X-Plane | The keymap doesn't match the aircraft | The standard keymap is for the Zibo 737. For X-Plane's default 737, see [Using X-Plane's default 737 instead](#using-x-planes-default-737-instead). For any other aircraft, the commands need changing in `keys.conf`. |
+| The Pi's screen stays on **WAITING FOR X-PLANE...** | WebFMC can't be reached from the Pi | Do the phone test in Part 6 step 3 first. If the phone works, type `journalctl -u flight-simulator-display -n 30` and check the address it tries. If the buttons haven't found X-Plane yet, the screen can't either; set `host =` in `/etc/flight-simulator/display.conf`. |
+| Pi screen blank or "no signal" | The HDMI-to-VGA adapter needs a fixed resolution | See "Screen blank" at the end of Part 6. |
+| CDU text too small or too large | Screen size | In `/etc/flight-simulator/display.conf`, set `chromium_flags = --force-device-scale-factor=1.5` (or 0.8), then restart the display. |
 | `X-Plane not found; dropped ...` | The Pi can't see X-Plane | Make sure X-Plane is running, then follow [If the Pi can't find X-Plane](#if-the-pi-cant-find-x-plane). |
 
 To see the last 50 lines of the program's log at any time, type:

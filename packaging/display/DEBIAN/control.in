@@ -1,0 +1,13 @@
+Package: flight-simulator-display
+Version: @VERSION@
+Architecture: all
+Section: misc
+Priority: optional
+Depends: flight-simulator-keys (>= 2.1.0), cage, chromium | chromium-browser, curl
+Maintainer: variable31 <https://github.com/variable31/pi-xplane-fmc-cdu-keys-only>
+Homepage: https://github.com/variable31/pi-xplane-fmc-cdu-keys-only
+Description: Full-screen X-Plane CDU on the Pi's display (via WebFMC)
+ Shows the CDU served by the WebFMC X-Plane plugin full screen on the
+ Raspberry Pi's display at boot, with an automatic "Waiting for X-Plane"
+ screen while the simulator is not running. Companion to
+ flight-simulator-keys.

@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+if [ "$1" = "configure" ]; then
+	for g in video render input; do
+		if getent group "$g" >/dev/null; then
+			adduser --quiet flightsim "$g" || true
+		fi
+	done
+	if [ -d /run/systemd/system ]; then
+		systemctl daemon-reload
+		systemctl enable flight-simulator-display.service
+		systemctl restart flight-simulator-display.service || true
+	fi
+fi
+exit 0

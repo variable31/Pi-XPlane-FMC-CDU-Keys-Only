@@ -1,0 +1,31 @@
+[Unit]
+Description=Flight Simulator CDU display (WebFMC, full screen)
+Wants=network-online.target
+After=network-online.target systemd-user-sessions.service flight-simulator-keys.service
+# Takes over the Pi's own screen (tty1); log in over SSH instead.
+Conflicts=getty@tty1.service
+After=getty@tty1.service
+
+[Service]
+Type=simple
+User=flightsim
+SupplementaryGroups=video render input
+# A logind session on tty1 gives the kiosk access to the screen.
+PAMName=login
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+StandardInput=tty-fail
+StandardOutput=journal
+StandardError=journal
+UtmpIdentifier=tty1
+UtmpMode=user
+StateDirectory=flight-simulator-display
+Environment=HOME=/var/lib/flight-simulator-display
+ExecStart=/usr/lib/flight-simulator/display-launch
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
