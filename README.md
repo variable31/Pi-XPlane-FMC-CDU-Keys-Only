@@ -84,7 +84,7 @@ reboot.
    is normal and not an error.
 
 **Check:** type `flight-simulator-keys --version`. It should print a
-version number such as `2.1.1`.
+version number such as `2.2.0`.
 
 ### Part 3: Free up the pins the buttons use
 
@@ -126,7 +126,7 @@ background copy first so the test can use the pins.
    ```
    You should see:
    ```
-   flight-simulator-keys 2.1.1: loaded 69 key bindings from /etc/flight-simulator/keys.conf (8 rows x 9 columns)
+   flight-simulator-keys 2.2.0: loaded 69 key bindings from /etc/flight-simulator/keys.conf (8 rows x 9 columns)
    Scanning keypad. Press Control-C to stop.
    ```
 3. **Press each button on the panel, one at a time.** Each press should
@@ -242,8 +242,10 @@ You need the X-Plane computer, a phone on the same Wi-Fi, and the Pi.
    ```
 10. Look at the Pi's screen. It shows **WAITING FOR X-PLANE...** in green.
     Once X-Plane and WebFMC are running, it switches to the CDU by itself,
-    usually within 10 seconds of the buttons finding X-Plane. Press **LEGS**
-    on the panel and the page changes on the Pi's screen and in X-Plane.
+    usually within 10 seconds of the buttons finding X-Plane. It shows only
+    the CDU **screen**, without WebFMC's on-screen keys, because the panel
+    has real buttons. Press **LEGS** on the panel and the page changes on the
+    Pi's screen and in X-Plane.
 
 **Every flight from now on:** turn on the X-Plane computer, start X-Plane
 with the Zibo, and turn on the Pi. Nothing else is needed.
@@ -255,8 +257,24 @@ with the Zibo, and turn on the Pi. Nothing else is needed.
 - To change the WebFMC port, set a fixed X-Plane address, or make the text
   bigger, edit `/etc/flight-simulator/display.conf`, then type
   `sudo systemctl restart flight-simulator-display`.
+- To show WebFMC's on-screen keys as well, set `screen_only = no` in that
+  file. To show the first officer's (right) CDU, set `side = 1` (and use
+  the `fmc2_` keymap, see [Changing what the buttons do](#changing-what-the-buttons-do)).
 - To remove it, type `sudo apt remove flight-simulator-display`. The
   buttons keep working.
+
+**CDU screen doesn't fill the display?** WebFMC keeps the CDU's shape, so
+it leaves black bars on a screen with a different shape. To stretch it to
+fill the whole display (once; the Pi remembers it):
+1. Plug a USB mouse into the Pi.
+2. On the Pi's screen, click WebFMC's **settings** button (the gear).
+3. Turn **Keep Aspect Ratio** off, then close the settings.
+4. Unplug the mouse.
+
+If the text is still too small or too large, set
+`chromium_flags = --force-device-scale-factor=1.2` (try 0.8 to 1.5) in
+`/etc/flight-simulator/display.conf`, then type
+`sudo systemctl restart flight-simulator-display`.
 
 **Screen blank, "no signal", or the wrong size?** HDMI-to-VGA adapters
 often don't tell the Pi which resolutions the screen supports. Set one by
@@ -318,6 +336,8 @@ networks.
 | The phone test (Part 6 step 7) shows nothing | Windows is blocking it, or WebFMC isn't loaded | Check the network is **Private** (Part 6 step 4), allow X-Plane in the Windows Security box, and check **WebFMC** is listed under X-Plane's **Plugins** menu. Use the address from `ipconfig` and add `:9090`. |
 | The Pi's screen stays on **WAITING FOR X-PLANE...** | WebFMC can't be reached from the Pi | Do the phone test in Part 6 step 7 first. If the phone works, type `journalctl -t display-launch -n 30 --no-pager` and check the address it tries. If the buttons haven't found X-Plane yet, the screen can't either; set `host =` in `/etc/flight-simulator/display.conf`. |
 | The Pi's screen shows the **Raspberry Pi desktop** instead of the CDU | The desktop is keeping the screen | Turn off the desktop (Part 6 step 8): `sudo systemctl set-default multi-user.target`, then `sudo reboot`. |
+| The Pi's screen shows WebFMC's **on-screen keys** | Older display program, or `screen_only` is off | Update the display program (repeat Part 6 step 9) to version 2.2.0 or later. Check `screen_only = yes` in `/etc/flight-simulator/display.conf`, then type `sudo systemctl restart flight-simulator-display`. |
+| The CDU screen has black bars or is small | WebFMC keeps the CDU's shape | See "CDU screen doesn't fill the display" in Part 6. |
 | Pi screen blank or "no signal" | The HDMI-to-VGA adapter needs a fixed resolution | See "Screen blank" at the end of Part 6. |
 | CDU text too small or too large | Screen size | In `/etc/flight-simulator/display.conf`, set `chromium_flags = --force-device-scale-factor=1.5` (or 0.8), then restart the display. |
 | `X-Plane not found; dropped ...` | The Pi can't see X-Plane | Make sure X-Plane is running, then follow [If the Pi can't find X-Plane](#if-the-pi-cant-find-x-plane). |
@@ -349,7 +369,8 @@ Only needed for a new card, or to start over. This **erases** the card.
 
 ### Updating or removing
 
-- **Update:** repeat Part 2. Your `keys.conf` changes are kept.
+- **Update:** repeat Part 2, and Part 6 step 9 if you use the screen.
+  Your changes to `keys.conf` and `display.conf` are kept.
 - **Remove:** type `sudo apt remove flight-simulator-keys`.
 
 ---

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(flight-simulator-keys
-	VERSION 2.1.1
+	VERSION 2.2.0
 	DESCRIPTION "Raspberry Pi GPIO key matrix to X-Plane command bridge"
 	LANGUAGES CXX)
 
