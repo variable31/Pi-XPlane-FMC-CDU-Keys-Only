@@ -179,27 +179,49 @@ X-Plane plugin that publishes the CDU on your home network. The Pi
 switches to it automatically whenever X-Plane is running, and shows
 "WAITING FOR X-PLANE..." when it isn't.
 
-**On the X-Plane computer (once):**
+The Pi and the X-Plane computer must be on the **same home network**
+(the same Wi-Fi or router). Nothing else connects them.
 
-1. Install **WebFMC (free) for X-Plane 12** by Green Arc Studios. The
+**On the X-Plane computer (once, about 30 minutes):**
+
+You need the X-Plane computer, a phone on the same Wi-Fi, and the Pi.
+
+1. **Update X-Plane 12.** Run the **X-Plane 12 Installer** and choose
+   **Update X-Plane**. Let it finish.
+2. **Install the Zibo 737-800 for X-Plane 12.** The X-Plane 11 copy does
+   not work in X-Plane 12, so download the X-Plane 12 version and unzip it
+   into `X-Plane 12\Aircraft\`. Start X-Plane, check that the Zibo loads
+   and flies, then quit X-Plane.
+3. **Install WebFMC (free) for X-Plane 12** by Green Arc Studios. The
    **free** version supports the Zibo 737, so there's nothing to buy.
    Download it from [WebFMC on X-Plane.org](https://forums.x-plane.org/files/file/43314-webfmc/)
-   (a free X-Plane.org account is needed) and follow the instructions that
-   come with it. Make sure you pick the X-Plane 12 version.
+   (a free X-Plane.org account is needed). Pick the **X-Plane 12**
+   version, unzip it and follow the instructions that come with it; it
+   normally goes into `X-Plane 12\Resources\plugins\`.
    *WebFMC Pro* (paid) only adds other add-on aircraft such as ToLiss or
    FlightFactor. Either version works with this program.
-2. Start X-Plane 12 with the Zibo 737. If Windows asks whether to let
-   X-Plane use the network, tick **Private networks** and click **Allow**.
-3. **Test it from a phone** on the same Wi-Fi. Open the browser and go to
-   `http://` + the X-Plane computer's address + `:9090`, for example
-   `http://192.168.1.20:9090`. (Find the address with `ipconfig`; see
-   [If the Pi can't find X-Plane](#if-the-pi-cant-find-x-plane).)
+4. **Make sure Windows treats your home network as Private.** If it is set
+   to *Public*, Windows blocks the phone and the Pi. Click **Start** >
+   **Settings** > **Network & internet**, click **Wi-Fi** or **Ethernet**
+   (whichever this computer uses), click your network, and under
+   **Network profile type** choose **Private network**.
+5. **Start X-Plane 12 and load a flight in the Zibo 737,** in the
+   captain's (left) seat. If a **Windows Security** box asks about
+   X-Plane, tick **Private networks** and click **Allow**. In X-Plane's top
+   menu, open **Plugins** and check that **WebFMC** is listed.
+6. **Find this computer's address.** Click **Start**, type `cmd`, press
+   **Enter**, then type `ipconfig` and press **Enter**. Write down the
+   **IPv4 Address**, for example `192.168.1.20`.
+7. **Test it from a phone** on the same Wi-Fi. Open the browser and go to
+   `http://` + that address + `:9090`, for example
+   `http://192.168.1.20:9090`. You should see the 737's CDU. Press LEGS on
+   the phone and the CDU in X-Plane changes too.
    **The CDU must appear on the phone before you continue.** If it doesn't,
-   the Pi won't be able to show it either.
+   the Pi won't be able to show it either; check steps 3 to 5 again.
 
 **On the Pi:**
 
-4. **Turn off the Pi's desktop.** The CDU needs the whole screen, and
+8. **Turn off the Pi's desktop.** The CDU needs the whole screen, and
    while the Raspberry Pi desktop is running it keeps the screen for
    itself. (A Pi set up with *Raspberry Pi OS Lite* has no desktop, so this
    changes nothing there.) Type:
@@ -211,17 +233,20 @@ switches to it automatically whenever X-Plane is running, and shows
    the desktop. That's expected. Reconnect over SSH to continue. To get the
    desktop back later: `sudo systemctl set-default graphical.target`, then
    `sudo reboot`.
-5. Download and install the display program. Use the same terminal as
+9. Download and install the display program. Use the same terminal as
    Part 2 (SSH is fine). This also installs a web browser, so it takes
    several minutes on a Pi 3:
    ```
    wget https://github.com/variable31/Pi-XPlane-FMC-CDU-Keys-Only/releases/latest/download/flight-simulator-display_all.deb
    sudo apt install ./flight-simulator-display_all.deb
    ```
-6. Look at the Pi's screen. It shows **WAITING FOR X-PLANE...** in green.
-   Once X-Plane and WebFMC are running, it switches to the CDU by itself,
-   usually within 10 seconds of the buttons finding X-Plane. Press **LEGS**
-   on the panel and the screen changes page.
+10. Look at the Pi's screen. It shows **WAITING FOR X-PLANE...** in green.
+    Once X-Plane and WebFMC are running, it switches to the CDU by itself,
+    usually within 10 seconds of the buttons finding X-Plane. Press **LEGS**
+    on the panel and the page changes on the Pi's screen and in X-Plane.
+
+**Every flight from now on:** turn on the X-Plane computer, start X-Plane
+with the Zibo, and turn on the Pi. Nothing else is needed.
 
 **Good to know:**
 
@@ -290,8 +315,9 @@ networks.
 | `Sudo is disabled on this machine` | You typed the command on Windows, not on the Pi | Connect to the Pi first (see Part 1). Don't change the Windows setting. |
 | `ssh: ... Connection refused` | SSH is switched off on the Pi | See [Preparing a new memory card](#preparing-a-new-memory-card-optional), step 3. |
 | The log says `sent ...` but nothing happens in X-Plane | The keymap doesn't match the aircraft | The standard keymap is for the Zibo 737. For X-Plane's default 737, see [Using X-Plane's default 737 instead](#using-x-planes-default-737-instead). For any other aircraft, the commands need changing in `keys.conf`. |
-| The Pi's screen stays on **WAITING FOR X-PLANE...** | WebFMC can't be reached from the Pi | Do the phone test in Part 6 step 3 first. If the phone works, type `journalctl -t display-launch -n 30 --no-pager` and check the address it tries. If the buttons haven't found X-Plane yet, the screen can't either; set `host =` in `/etc/flight-simulator/display.conf`. |
-| The Pi's screen shows the **Raspberry Pi desktop** instead of the CDU | The desktop is keeping the screen | Turn off the desktop (Part 6 step 4): `sudo systemctl set-default multi-user.target`, then `sudo reboot`. |
+| The phone test (Part 6 step 7) shows nothing | Windows is blocking it, or WebFMC isn't loaded | Check the network is **Private** (Part 6 step 4), allow X-Plane in the Windows Security box, and check **WebFMC** is listed under X-Plane's **Plugins** menu. Use the address from `ipconfig` and add `:9090`. |
+| The Pi's screen stays on **WAITING FOR X-PLANE...** | WebFMC can't be reached from the Pi | Do the phone test in Part 6 step 7 first. If the phone works, type `journalctl -t display-launch -n 30 --no-pager` and check the address it tries. If the buttons haven't found X-Plane yet, the screen can't either; set `host =` in `/etc/flight-simulator/display.conf`. |
+| The Pi's screen shows the **Raspberry Pi desktop** instead of the CDU | The desktop is keeping the screen | Turn off the desktop (Part 6 step 8): `sudo systemctl set-default multi-user.target`, then `sudo reboot`. |
 | Pi screen blank or "no signal" | The HDMI-to-VGA adapter needs a fixed resolution | See "Screen blank" at the end of Part 6. |
 | CDU text too small or too large | Screen size | In `/etc/flight-simulator/display.conf`, set `chromium_flags = --force-device-scale-factor=1.5` (or 0.8), then restart the display. |
 | `X-Plane not found; dropped ...` | The Pi can't see X-Plane | Make sure X-Plane is running, then follow [If the Pi can't find X-Plane](#if-the-pi-cant-find-x-plane). |
