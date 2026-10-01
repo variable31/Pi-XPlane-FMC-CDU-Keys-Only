@@ -25,6 +25,7 @@
 #include "config.h"
 #include "gpio_chardev.h"
 #include "gpio_fake.h"
+#include "host_file.h"
 #include "keypad_scanner.h"
 #include "xplane_link.h"
 
@@ -38,6 +39,9 @@
 
 #ifndef FLIGHTSIM_DEFAULT_CONFIG
 #define FLIGHTSIM_DEFAULT_CONFIG "/etc/flight-simulator/keys.conf"
+#endif
+#ifndef FLIGHTSIM_HOST_FILE
+#define FLIGHTSIM_HOST_FILE "/run/flight-simulator/xplane-host"
 #endif
 #ifndef FLIGHTSIM_VERSION
 #define FLIGHTSIM_VERSION "dev"
@@ -64,6 +68,9 @@ void usage(const char * prog) {
 			"  -c, --config PATH     keymap/config file (default "
 			FLIGHTSIM_DEFAULT_CONFIG ")\n"
 			"  -n, --dry-run         log key presses, do not contact X-Plane\n"
+			"      --host-file PATH  where to publish the X-Plane address for the\n"
+			"                        CDU display (default " FLIGHTSIM_HOST_FILE ";\n"
+			"                        empty string disables)\n"
 			"      --fake-keys KEYS  no GPIO: simulate pressing each row,col in\n"
 			"                        KEYS (e.g. \"1,1 5,3\") once, then exit\n"
 			"  -V, --version         print version and exit\n"
@@ -124,6 +131,7 @@ int main(int argc, char * argv[]) {
 	bool dryRun = false;
 	bool fake = false;
 	std::string fakeKeys;
+	std::string hostFilePath = FLIGHTSIM_HOST_FILE;
 
 	for (int i = 1; i < argc; i++) {
 		std::string a = argv[i];
@@ -131,6 +139,8 @@ int main(int argc, char * argv[]) {
 			configPath = argv[++i];
 		} else if (a == "-n" || a == "--dry-run") {
 			dryRun = true;
+		} else if (a == "--host-file" && i + 1 < argc) {
+			hostFilePath = argv[++i];
 		} else if (a == "--fake-keys" && i + 1 < argc) {
 			fake = true;
 			fakeKeys = argv[++i];
@@ -171,7 +181,9 @@ int main(int argc, char * argv[]) {
 		}
 
 		std::unique_ptr<XPlaneLink> link;
+		std::unique_ptr<HostFile> hostFile;
 		if (!dryRun) {
+			hostFile.reset(new HostFile(hostFilePath));
 			link.reset(new XPlaneLink(cfg.host, cfg.port));
 			std::cout << (cfg.host.empty() ?
 					"Listening for the X-Plane beacon ..." :
@@ -195,6 +207,7 @@ int main(int argc, char * argv[]) {
 				link->refresh(change);
 				if (!change.empty()) {
 					std::cout << change << std::endl;
+					hostFile->set(link->connected() ? link->target().ip : "");
 				}
 				nextRefresh = now + seconds(1);
 			}

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(flight-simulator-keys
-	VERSION 2.0.2
+	VERSION 2.1.0
 	DESCRIPTION "Raspberry Pi GPIO key matrix to X-Plane command bridge"
 	LANGUAGES CXX)
 
@@ -36,6 +36,7 @@ endif()
 add_library(flightsim_core STATIC
 	src/config.cpp
 	src/gpio_chardev.cpp
+	src/host_file.cpp
 	src/keypad_scanner.cpp
 	src/xplane_link.cpp)
 target_include_directories(flightsim_core PUBLIC src)
@@ -54,7 +55,7 @@ target_link_options(flight-simulator-keys PRIVATE -static-libstdc++ -static-libg
 # --- tests ---
 if(FLIGHTSIM_BUILD_TESTS)
 	enable_testing()
-	foreach(t config scanner udp)
+	foreach(t config scanner udp hostfile)
 		add_executable(test_${t} tests/test_${t}.cpp)
 		target_link_libraries(test_${t} PRIVATE flightsim_core)
 		target_compile_options(test_${t} PRIVATE ${FLIGHTSIM_WARNINGS})
@@ -63,6 +64,16 @@ if(FLIGHTSIM_BUILD_TESTS)
 		add_test(NAME ${t} COMMAND test_${t})
 	endforeach()
 	set_tests_properties(udp PROPERTIES TIMEOUT 30)
+
+	# CDU display launcher state machine (needs python3 + curl).
+	find_program(FLIGHTSIM_PYTHON3 python3)
+	find_program(FLIGHTSIM_CURL curl)
+	if(FLIGHTSIM_PYTHON3 AND FLIGHTSIM_CURL)
+		add_test(NAME display_launch COMMAND sh
+			${CMAKE_CURRENT_SOURCE_DIR}/tests/test_display_launch.sh
+			${CMAKE_CURRENT_SOURCE_DIR})
+		set_tests_properties(display_launch PROPERTIES TIMEOUT 60)
+	endif()
 
 	# End-to-end: shipped config + fake keypad, no GPIO or X-Plane needed.
 	add_test(NAME dry_run_e2e COMMAND flight-simulator-keys

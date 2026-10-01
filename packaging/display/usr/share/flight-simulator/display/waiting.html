@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Waiting for X-Plane</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #3f3; cursor: none;
+    font-family: "DejaVu Sans Mono", monospace; }
+  main { height: 100%; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center; gap: 1.2em; }
+  h1 { font-size: 7vw; margin: 0; letter-spacing: .05em; }
+  p { font-size: 3.4vw; margin: 0; color: #ccc; max-width: 90vw; }
+  .dots::after { content: ""; animation: dots 2s steps(4) infinite; }
+  @keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>WAITING FOR X-PLANE<span class="dots"></span></h1>
+  <p>Start X-Plane 12 on the simulator PC and load the Zibo 737.</p>
+  <p>The CDU appears here automatically once X-Plane and WebFMC are running.</p>
+</main>
+</body>
+</html>

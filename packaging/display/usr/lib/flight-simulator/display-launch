@@ -1,0 +1,93 @@
+#!/bin/sh
+# flight-simulator-display launcher.
+#
+# Shows WebFMC's CDU page full screen while X-Plane is reachable, and a
+# local "Waiting for X-Plane" page otherwise. Switches automatically in both
+# directions, so the screen needs no attention when X-Plane starts or stops.
+#
+# Copyright (c) 2026 Pi-XPlane-FMC-CDU-Keys-Only contributors. GPL-3.0-or-later.
+
+set -u
+
+CONF=${FSD_CONF:-/etc/flight-simulator/display.conf}
+HOST_FILE=${FSD_HOST_FILE:-/run/flight-simulator/xplane-host}
+WAITING_URL=file://${FSD_WAITING:-/usr/share/flight-simulator/display/waiting.html}
+KIOSK=${FSD_KIOSK:-/usr/lib/flight-simulator/display-kiosk}
+POLL=${FSD_POLL:-3}
+
+log() { echo "display: $*"; }
+
+# conf KEY DEFAULT: value of "KEY = value" from $CONF, comments stripped.
+conf() {
+	v=$(sed -n "s/^[[:space:]]*$1[[:space:]]*=\([^;#]*\).*/\1/p" "$CONF" 2>/dev/null |
+		tail -n 1 | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+	if [ -n "$v" ]; then echo "$v"; else echo "$2"; fi
+}
+
+PORT=$(conf port 9090)
+PAGE=$(conf path /)
+LOST=$(conf lost_seconds 30)
+HOST_CFG=$(conf host "")
+FSD_CHROMIUM_FLAGS=$(conf chromium_flags "")
+export FSD_CHROMIUM_FLAGS
+
+# WebFMC URL for the current X-Plane address, or nothing if unknown yet.
+target() {
+	h=$HOST_CFG
+	if [ -z "$h" ] && [ -r "$HOST_FILE" ]; then
+		h=$(head -n 1 "$HOST_FILE")
+	fi
+	if [ -n "$h" ]; then echo "http://$h:$PORT$PAGE"; fi
+}
+
+reachable() { curl -s -o /dev/null -m 3 "$1"; }
+
+pid=""
+shown=""
+
+stop() {
+	if [ -n "$pid" ]; then
+		kill "$pid" 2>/dev/null
+		wait "$pid" 2>/dev/null
+	fi
+	pid=""
+	shown=""
+}
+
+show() {
+	[ "$1" = "$shown" ] && return
+	stop
+	log "showing $1"
+	"$KIOSK" "$1" &
+	pid=$!
+	shown=$1
+}
+
+trap 'stop; exit 0' TERM INT
+
+log "WebFMC port $PORT, host ${HOST_CFG:-automatic}"
+show "$WAITING_URL"
+down=0
+while :; do
+	url=$(target)
+	if [ -n "$url" ] && reachable "$url"; then
+		down=0
+		show "$url"
+	elif [ "$shown" != "$WAITING_URL" ]; then
+		down=$((down + POLL))
+		if [ "$down" -ge "$LOST" ]; then
+			log "X-Plane unreachable for ${down}s"
+			show "$WAITING_URL"
+		fi
+	fi
+
+	# Bring the browser back if it crashed or was closed.
+	if [ -n "$pid" ] && ! kill -0 "$pid" 2>/dev/null; then
+		again=$shown
+		pid=""
+		shown=""
+		log "browser exited; restarting"
+		show "$again"
+	fi
+	sleep "$POLL"
+done

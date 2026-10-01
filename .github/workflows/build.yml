@@ -48,9 +48,25 @@ jobs:
           path: build-${{ matrix.arch }}/*.deb
           if-no-files-found: error
 
+  display-deb:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build flight-simulator-display .deb
+        run: |
+          VERSION=""
+          case "$GITHUB_REF" in refs/tags/v*) VERSION="${GITHUB_REF#refs/tags/v}" ;; esac
+          scripts/build-display-deb.sh "$VERSION"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flight-simulator-display
+          path: build-display/*.deb
+          if-no-files-found: error
+
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: deb
+    needs: [deb, display-deb]
     runs-on: ubuntu-latest
     # Tag push and release events can both fire for one version; run them
     # one at a time so the second just re-uploads the same files.
