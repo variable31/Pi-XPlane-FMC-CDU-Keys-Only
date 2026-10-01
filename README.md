@@ -181,10 +181,13 @@ switches to it automatically whenever X-Plane is running, and shows
 
 **On the X-Plane computer (once):**
 
-1. Install **WebFMC Pro for X-Plane 12** by Green Arc Studios, from the
-   [X-Plane.org store](https://store.x-plane.org/) or the developer's site,
-   using its installer. Check the product page to see whether its free mode
-   covers the Zibo 737 or the paid version is needed.
+1. Install **WebFMC (free) for X-Plane 12** by Green Arc Studios. The
+   **free** version supports the Zibo 737, so there's nothing to buy.
+   Download it from [WebFMC on X-Plane.org](https://forums.x-plane.org/files/file/43314-webfmc/)
+   (a free X-Plane.org account is needed) and follow the instructions that
+   come with it. Make sure you pick the X-Plane 12 version.
+   *WebFMC Pro* (paid) only adds other add-on aircraft such as ToLiss or
+   FlightFactor. Either version works with this program.
 2. Start X-Plane 12 with the Zibo 737. If Windows asks whether to let
    X-Plane use the network, tick **Private networks** and click **Allow**.
 3. **Test it from a phone** on the same Wi-Fi. Open the browser and go to
