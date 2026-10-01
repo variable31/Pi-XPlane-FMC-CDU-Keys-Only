@@ -84,7 +84,7 @@ reboot.
    is normal and not an error.
 
 **Check:** type `flight-simulator-keys --version`. It should print a
-version number such as `2.1.0`.
+version number such as `2.1.1`.
 
 ### Part 3: Free up the pins the buttons use
 
@@ -126,7 +126,7 @@ background copy first so the test can use the pins.
    ```
    You should see:
    ```
-   flight-simulator-keys 2.1.0: loaded 69 key bindings from /etc/flight-simulator/keys.conf (8 rows x 9 columns)
+   flight-simulator-keys 2.1.1: loaded 69 key bindings from /etc/flight-simulator/keys.conf (8 rows x 9 columns)
    Scanning keypad. Press Control-C to stop.
    ```
 3. **Press each button on the panel, one at a time.** Each press should
@@ -199,14 +199,26 @@ switches to it automatically whenever X-Plane is running, and shows
 
 **On the Pi:**
 
-4. Download and install the display program. Use the same terminal as
+4. **Turn off the Pi's desktop.** The CDU needs the whole screen, and
+   while the Raspberry Pi desktop is running it keeps the screen for
+   itself. (A Pi set up with *Raspberry Pi OS Lite* has no desktop, so this
+   changes nothing there.) Type:
+   ```
+   sudo systemctl set-default multi-user.target
+   sudo reboot
+   ```
+   After the restart, the Pi's screen shows a text login prompt instead of
+   the desktop. That's expected. Reconnect over SSH to continue. To get the
+   desktop back later: `sudo systemctl set-default graphical.target`, then
+   `sudo reboot`.
+5. Download and install the display program. Use the same terminal as
    Part 2 (SSH is fine). This also installs a web browser, so it takes
    several minutes on a Pi 3:
    ```
    wget https://github.com/variable31/Pi-XPlane-FMC-CDU-Keys-Only/releases/latest/download/flight-simulator-display_all.deb
    sudo apt install ./flight-simulator-display_all.deb
    ```
-5. Look at the Pi's screen. It shows **WAITING FOR X-PLANE...** in green.
+6. Look at the Pi's screen. It shows **WAITING FOR X-PLANE...** in green.
    Once X-Plane and WebFMC are running, it switches to the CDU by itself,
    usually within 10 seconds of the buttons finding X-Plane. Press **LEGS**
    on the panel and the screen changes page.
@@ -278,7 +290,8 @@ networks.
 | `Sudo is disabled on this machine` | You typed the command on Windows, not on the Pi | Connect to the Pi first (see Part 1). Don't change the Windows setting. |
 | `ssh: ... Connection refused` | SSH is switched off on the Pi | See [Preparing a new memory card](#preparing-a-new-memory-card-optional), step 3. |
 | The log says `sent ...` but nothing happens in X-Plane | The keymap doesn't match the aircraft | The standard keymap is for the Zibo 737. For X-Plane's default 737, see [Using X-Plane's default 737 instead](#using-x-planes-default-737-instead). For any other aircraft, the commands need changing in `keys.conf`. |
-| The Pi's screen stays on **WAITING FOR X-PLANE...** | WebFMC can't be reached from the Pi | Do the phone test in Part 6 step 3 first. If the phone works, type `journalctl -u flight-simulator-display -n 30` and check the address it tries. If the buttons haven't found X-Plane yet, the screen can't either; set `host =` in `/etc/flight-simulator/display.conf`. |
+| The Pi's screen stays on **WAITING FOR X-PLANE...** | WebFMC can't be reached from the Pi | Do the phone test in Part 6 step 3 first. If the phone works, type `journalctl -t display-launch -n 30 --no-pager` and check the address it tries. If the buttons haven't found X-Plane yet, the screen can't either; set `host =` in `/etc/flight-simulator/display.conf`. |
+| The Pi's screen shows the **Raspberry Pi desktop** instead of the CDU | The desktop is keeping the screen | Turn off the desktop (Part 6 step 4): `sudo systemctl set-default multi-user.target`, then `sudo reboot`. |
 | Pi screen blank or "no signal" | The HDMI-to-VGA adapter needs a fixed resolution | See "Screen blank" at the end of Part 6. |
 | CDU text too small or too large | Screen size | In `/etc/flight-simulator/display.conf`, set `chromium_flags = --force-device-scale-factor=1.5` (or 0.8), then restart the display. |
 | `X-Plane not found; dropped ...` | The Pi can't see X-Plane | Make sure X-Plane is running, then follow [If the Pi can't find X-Plane](#if-the-pi-cant-find-x-plane). |
