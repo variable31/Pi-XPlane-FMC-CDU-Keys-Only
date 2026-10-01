@@ -48,6 +48,8 @@ echo 127.0.0.1 > "$T/xplane-host"; sleep 2
 
 serve
 wait_for "START http://127.0.0.1:$PORT/cdu" || fail "CDU not shown once WebFMC answered"
+# Default: WebFMC's screen-only mode, captain's side.
+grep -qx "START http://127.0.0.1:$PORT/cdu#screen=1,side=0" "$LOG" || fail "CDU not opened screen-only for the captain"
 grep -q "STOP file:///w.html" "$LOG" || fail "waiting page not closed"
 
 kill "$SP"; SP=""
@@ -83,6 +85,19 @@ kill "$LP"; wait "$LP" 2>/dev/null; LP=""
 n=$(grep -c "desktop is using the screen" "$T/launch.log") || true
 [ "${n:-0}" = 1 ] || fail "desktop message logged ${n:-0} times, expected once"
 grep -q "set-default multi-user.target" "$T/launch.log" || fail "desktop message lacks the fix"
+
+# WebFMC options from the config: keys shown, first officer, extra option.
+printf '[webfmc]\nhost = 127.0.0.1\nport = %s\npath = /cdu\nscreen_only = no\nside = 1\nextra = night=1  ; comment\n' "$PORT" > "$T/display.conf"
+: > "$LOG"
+# (the stand-in WebFMC server started above is still running)
+FSD_KIOSK=$T/kiosk FSD_CONF=$T/display.conf FSD_HOST_FILE=$T/none \
+	FSD_WAITING=/w.html FSD_POLL=1 \
+	sh "$SRC/packaging/display/usr/lib/flight-simulator/display-launch" > "$T/launch.log" 2>&1 &
+LP=$!
+wait_for "START http://127.0.0.1:$PORT/cdu#" || fail "CDU not shown with configured options"
+kill "$LP"; wait "$LP" 2>/dev/null; LP=""
+kill "$SP"; SP=""
+grep -qx "START http://127.0.0.1:$PORT/cdu#screen=0,side=1,night=1" "$LOG" || fail "WebFMC options from the config not used"
 
 echo "display launcher: all checks passed"
 cleanup

@@ -33,6 +33,24 @@ HOST_CFG=$(conf host "")
 FSD_CHROMIUM_FLAGS=$(conf chromium_flags "")
 export FSD_CHROMIUM_FLAGS
 
+# WebFMC reads its options from the part of the address after '#'. The
+# Pi has real buttons, so by default show only the CDU screen (WebFMC's
+# "screen only" mode) for the captain's side, which the keymap drives.
+SCREEN_ONLY=$(conf screen_only yes)
+case "$SCREEN_ONLY" in
+	yes | true | 1) SCREEN=1 ;;
+	no | false | 0) SCREEN=0 ;;
+	*) log "screen_only = $SCREEN_ONLY is not yes or no; using yes"; SCREEN=1 ;;
+esac
+SIDE=$(conf side 0)
+case "$SIDE" in
+	[0-9]) ;;
+	*) log "side = $SIDE is not a number; using 0 (captain)"; SIDE=0 ;;
+esac
+OPTIONS="screen=$SCREEN,side=$SIDE"
+EXTRA=$(conf extra "")
+[ -n "$EXTRA" ] && OPTIONS="$OPTIONS,$EXTRA"
+
 # WebFMC URL for the current X-Plane address, or nothing if unknown yet.
 target() {
 	h=$HOST_CFG
@@ -85,7 +103,7 @@ show() {
 
 trap 'stop; exit 0' TERM INT
 
-log "WebFMC port $PORT, host ${HOST_CFG:-automatic}"
+log "WebFMC port $PORT, host ${HOST_CFG:-automatic}, options $OPTIONS"
 desktop_active
 show "$WAITING_URL"
 down=0
@@ -93,7 +111,7 @@ while :; do
 	url=$(target)
 	if [ -n "$url" ] && reachable "$url"; then
 		down=0
-		show "$url"
+		show "$url#$OPTIONS"
 	elif [ "$shown" != "$WAITING_URL" ]; then
 		down=$((down + POLL))
 		if [ "$down" -ge "$LOST" ]; then
